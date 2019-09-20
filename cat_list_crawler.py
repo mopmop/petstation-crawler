@@ -14,6 +14,28 @@ from bs4 import BeautifulSoup
 
 requests.packages.urllib3.disable_warnings()
 
+import sqlite3 as lite
+import sys
+
+con = None
+
+try:
+    con = lite.connect('test.db')
+    with con:
+
+        cur = con.cursor()
+        cur.execute('''CREATE TABLE IF NOT EXISTS cat_list (id integer primary key, url varchar(255),
+                    kind  varchar(255), price varchar(255), gender varchar(255), color varchar(255),
+                    birthday varchar(255), cert varchar(255), datetime varchar(255))''')
+        # cur.execute("INSERT INTO cat_list VALUES(1,'Michelle')")
+
+except lite.Error as e:
+    print("Error %s:" % e.args[0])
+    sys.exit(1)
+finally:
+    if con:
+        con.close()
+
 search_url = "https://www.petstation.jp/animal_list.php?_search_animal__animal_search__species=2&_search_shop_info__animal_search__shop_address2=9&l1_s="
 
 
@@ -109,6 +131,34 @@ class MySaver(spider.Saver):
             self._save_pipe.write(",".join([str(item[col]) for col in item]))
             self._save_pipe.write("\n")
             self._save_pipe.flush()
+
+            con = None
+
+            try:
+                con = lite.connect('test.db')
+                with con:
+
+                    cur = con.cursor()
+                    cur.execute(f"""INSERT INTO cat_list (url,
+                                kind , price , gender, color,
+                                birthday , cert, datetime) VALUES(
+                                "{item['url']}",
+                                "{item['kind']}",
+                                "{item['price']}",
+                                "{item['gender']}",
+                                "{item['color']}",
+                                "{item['birthday']}",
+                                "{item['cert']}",
+                                "{item['datetime']}"
+                                )""")
+
+
+            except lite.Error as e:
+                print("Error %s:" % e.args[0])
+                sys.exit(1)
+            finally:
+                if con:
+                    con.close()
         return 1, None
 
 
